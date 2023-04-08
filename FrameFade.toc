@@ -1,0 +1,7 @@
+## Interface: 11200
+## Title: FrameFade
+## Author: Grylls
+## Notes: Fades frames based on conditions
+## Version: 1
+
+FrameFade.lua
