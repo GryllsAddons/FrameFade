@@ -1,14 +1,31 @@
-local frames = { PlayerFrame, PetFrame }
+local frames
+
+local function Check_pfUI()
+    return (pfUI and pfUI.version)
+end
 
 local function ShowFrames()
-    for _, frame in pairs(frames) do
-        frame:Show()
+    if Check_pfUI() then
+        for _, frame in pairs(frames) do
+            frame:SetScript("OnUpdate", pfUI.uf.OnUpdate)
+        end
+    else
+        for _, frame in pairs(frames) do
+            frame:Show()
+        end
     end
 end
 
 local function HideFrames()
-    for _, frame in pairs(frames) do
-        frame:Hide()
+    if Check_pfUI() then
+        for _, frame in pairs(frames) do
+            frame:SetScript("OnUpdate", nil)
+            frame:SetAlpha(0)         
+        end
+    else
+        for _, frame in pairs(frames) do
+            frame:Hide()
+        end
     end
 end
 
@@ -78,8 +95,30 @@ local function overlay(parent)
     end)
 end
 
-for _, frame in pairs(frames) do
-    overlay(frame)
+local function SetupFrames()
+    if Check_pfUI() then
+        if pfUI_config.unitframes.disable == "1" then
+            frames = { }
+            return
+        else
+            frames = { pfPlayer, pfPet }
+        end
+        
+        for _, frame in pairs(frames) do
+            frame:SetScript("OnEnter", function()
+                this:SetScript("OnUpdate", pfUI.uf.OnUpdate)
+            end)
+
+            frame:SetScript("OnLeave", function()
+                CheckConditions()
+            end)
+        end
+    else
+        frames = { PlayerFrame, PetFrame }
+        for _, frame in pairs(frames) do
+            overlay(frame)
+        end
+    end
 end
 
 local events = CreateFrame("Frame", nil, UIParent)	
@@ -100,5 +139,10 @@ events:RegisterEvent("PLAYER_REGEN_ENABLED") -- out of combat
 events:RegisterEvent("UNIT_PET")    
 
 events:SetScript("OnEvent", function()
-    CheckConditions()
+    if (event == "PLAYER_ENTERING_WORLD") then
+        SetupFrames()
+        CheckConditions()
+    else
+        CheckConditions()
+    end
 end)
