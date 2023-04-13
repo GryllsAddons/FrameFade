@@ -1,11 +1,13 @@
 local frames
+local is_pfUI
+local isCasting
 
 local function Check_pfUI()
-    return (pfUI and pfUI.version)
+    is_pfUI = IsAddOnLoaded("pfUI")
 end
 
 local function ShowFrames()
-    if Check_pfUI() then
+    if is_pfUI then
         for _, frame in pairs(frames) do
             frame:SetScript("OnUpdate", pfUI.uf.OnUpdate)
         end
@@ -17,7 +19,7 @@ local function ShowFrames()
 end
 
 local function HideFrames()
-    if Check_pfUI() then
+    if is_pfUI then
         for _, frame in pairs(frames) do
             frame:SetScript("OnUpdate", nil)
             frame:SetAlpha(0)         
@@ -27,10 +29,6 @@ local function HideFrames()
             frame:Hide()
         end
     end
-end
-
-local function isCasting()
-    if CastingBarFrame.casting or CastingBarFrame.channeling then return true end
 end
 
 local function FullHealth(unit)
@@ -55,10 +53,9 @@ end
 local function PlayerConditions()
     local fullhealth = FullHealth("player")
     local fullmana = FullMana("player")
-    local notcasting = not isCasting()
     local ooc = not UnitAffectingCombat("player")
 
-    if fullhealth and fullmana and notcasting and ooc then return true end
+    if fullhealth and fullmana and (not isCasting) and ooc then return true end
 end
 
 local function CheckConditions()
@@ -82,6 +79,8 @@ local function overlay(parent)
 
     f:SetScript("OnEnter", function()
         parent:Show()
+        ShowTextStatusBarText(getglobal(parent:GetName().."HealthBar"))
+        ShowTextStatusBarText(getglobal(parent:GetName().."ManaBar"))
     end)
 
     f:SetScript("OnLeave", function()
@@ -96,7 +95,7 @@ local function overlay(parent)
 end
 
 local function SetupFrames()
-    if Check_pfUI() then
+    if is_pfUI then
         if pfUI_config.unitframes.disable == "1" then
             frames = { }
             return
@@ -128,21 +127,24 @@ events:RegisterEvent("UNIT_HEALTH", "player")
 events:RegisterEvent("UNIT_HEALTH", "pet")
 events:RegisterEvent("UNIT_MANA", "player")
 events:RegisterEvent("UNIT_ENERGY", "player")
-events:RegisterEvent("SPELLCAST_START")
-events:RegisterEvent("SPELLCAST_CHANNEL_START")
-events:RegisterEvent("SPELLCAST_STOP")
-events:RegisterEvent("SPELLCAST_FAILED")
-events:RegisterEvent("SPELLCAST_INTERRUPTED")
-events:RegisterEvent("SPELLCAST_CHANNEL_STOP")
+events:RegisterEvent("SPELLCAST_START", "player")
+events:RegisterEvent("SPELLCAST_CHANNEL_START", "player")
+events:RegisterEvent("SPELLCAST_STOP", "player")
+events:RegisterEvent("SPELLCAST_FAILED", "player")
+events:RegisterEvent("SPELLCAST_INTERRUPTED", "player")
+events:RegisterEvent("SPELLCAST_CHANNEL_STOP", "player")
 events:RegisterEvent("PLAYER_REGEN_DISABLED") -- in combat
 events:RegisterEvent("PLAYER_REGEN_ENABLED") -- out of combat
 events:RegisterEvent("UNIT_PET")    
 
 events:SetScript("OnEvent", function()
     if (event == "PLAYER_ENTERING_WORLD") then
+        Check_pfUI()
         SetupFrames()
-        CheckConditions()
-    else
-        CheckConditions()
+    elseif ((event == "SPELLCAST_START") or (event == "SPELLCAST_CHANNEL_START")) then
+        isCasting = true
+    elseif ((event == "SPELLCAST_STOP") or (event == "SPELLCAST_FAILED") or (event == "SPELLCAST_INTERRUPTED") or (event == "SPELLCAST_CHANNEL_STOP")) then
+        isCasting = nil
     end
+    CheckConditions()
 end)
