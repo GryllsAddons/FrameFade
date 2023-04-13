@@ -138,13 +138,12 @@ events:RegisterEvent("PLAYER_REGEN_ENABLED") -- out of combat
 events:RegisterEvent("UNIT_PET")    
 
 events:SetScript("OnEvent", function()
+    isCasting = nil
     if (event == "PLAYER_ENTERING_WORLD") then
         Check_pfUI()
         SetupFrames()
-    elseif ((event == "SPELLCAST_START") or (event == "SPELLCAST_CHANNEL_START")) then
+    elseif ((event == "SPELLCAST_START") or (event == "SPELLCAST_CHANNEL_START") or (event == "SPELLCAST_STOP") or (event == "SPELLCAST_CHANNEL_STOP")) then
         isCasting = true
-    elseif ((event == "SPELLCAST_STOP") or (event == "SPELLCAST_FAILED") or (event == "SPELLCAST_INTERRUPTED") or (event == "SPELLCAST_CHANNEL_STOP")) then
-        isCasting = nil
     end
     CheckConditions()
 end)
