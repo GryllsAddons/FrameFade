@@ -140,8 +140,11 @@ events:RegisterEvent("UNIT_PET")
 events:SetScript("OnEvent", function()
     isCasting = nil
     if (event == "PLAYER_ENTERING_WORLD") then
-        Check_pfUI()
-        SetupFrames()
+        if not this.loaded then
+            this.loaded = true
+            Check_pfUI()
+            SetupFrames()
+        end
     elseif ((event == "SPELLCAST_START") or (event == "SPELLCAST_CHANNEL_START") or (event == "SPELLCAST_STOP") or (event == "SPELLCAST_CHANNEL_STOP")) then
         isCasting = true
     end
