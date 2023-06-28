@@ -42,7 +42,11 @@ local function FullMana(unit)
 end
 
 local function HappyPet()
-    if (UnitCreatureType("pet") == "Beast") and (GetPetHappiness() > 1) then return true end
+    if not (UnitCreatureType("pet") == "Beast") then 
+        return true
+    elseif (GetPetHappiness() > 1) then 
+        return true
+    end
 end
 
 local function PetConditions()
