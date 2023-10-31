@@ -13,7 +13,7 @@ local function ShowFrames()
         end
     else
         for _, frame in pairs(frames) do
-            frame:Show()
+            frame:SetAlpha(1)
         end
     end
 end
@@ -26,7 +26,7 @@ local function HideFrames()
         end
     else
         for _, frame in pairs(frames) do
-            frame:Hide()
+            frame:SetAlpha(0)
         end
     end
 end
@@ -62,6 +62,12 @@ local function PlayerConditions()
     if fullhealth and fullmana and (not isCasting) and ooc then return true end
 end
 
+local function CheckResting()
+    if IsResting() then
+        PlayerRestGlow:SetAlpha(PlayerFrame:GetAlpha())
+    end
+end
+
 local function CheckConditions()
     local notarget = not UnitExists("target")
     local player = PlayerConditions()
@@ -69,33 +75,11 @@ local function CheckConditions()
 
     if notarget and player and pet then 
         HideFrames()
+        CheckResting()
     else
         ShowFrames()
+        CheckResting()
     end
-end
-
-local function overlay(parent)
-    local f = CreateFrame("Button")
-    f:SetAllPoints(parent)
-    f:EnableMouse(true)
-    f:RegisterForClicks('LeftButtonUp', 'RightButtonUp',
-    'MiddleButtonUp', 'Button4Up', 'Button5Up')
-
-    f:SetScript("OnEnter", function()
-        parent:Show()
-        ShowTextStatusBarText(getglobal(parent:GetName().."HealthBar"))
-        ShowTextStatusBarText(getglobal(parent:GetName().."ManaBar"))
-    end)
-
-    f:SetScript("OnLeave", function()
-        this:Show()
-        CheckConditions()       
-    end)
-
-    f:SetScript("OnClick", function()
-        this:Hide()
-        getglobal(parent:GetName().."_OnClick")(arg1)
-    end)
 end
 
 local function SetupFrames()
@@ -119,7 +103,18 @@ local function SetupFrames()
     else
         frames = { PlayerFrame, PetFrame }
         for _, frame in pairs(frames) do
-            overlay(frame)
+            local enter = frame:GetScript("OnEnter")
+            frame:SetScript("OnEnter", function()
+                ShowFrames()
+                CheckResting()
+                enter()
+            end)
+    
+            local leave = frame:GetScript("OnLeave")
+            frame:SetScript("OnLeave", function()
+                leave()
+                CheckConditions() 
+            end)
         end
     end
 end
